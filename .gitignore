@@ -1,0 +1,19 @@
+# Build artifacts
+/build/
+/bin/
+/obj/
+*.o
+*.exe
+*.out
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Docker
+*.log
+
+# Ansible facts
+host_vars/

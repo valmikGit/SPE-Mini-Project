@@ -1,0 +1,30 @@
+---
+- name: Deploy scientific-calculator Docker container
+  hosts: local
+  gather_facts: false
+  vars:
+    docker_user: "youruser"
+    image_tag: "latest"
+    container_name: "scientific_calculator"
+    image_name: "{{ docker_user }}/scientific-calculator:{{ image_tag }}"
+  tasks:
+    - name: Ensure docker-py (community.docker) is available (warning only)
+      ansible.builtin.debug:
+        msg: "Make sure docker CLI and Python docker library (for community.docker) are available if using docker modules."
+
+    - name: Pull docker image
+      ansible.builtin.shell: |
+        docker pull {{ image_name }}
+      register: pull_result
+      changed_when: "'Downloaded' in pull_result.stdout or 'Image is up to date' in pull_result.stdout or pull_result.rc == 0"
+
+    - name: Stop and remove existing container if any
+      ansible.builtin.shell: |
+        docker rm -f {{ container_name }} || true
+      ignore_errors: true
+
+    - name: Run container
+      ansible.builtin.shell: |
+        docker run -d --name {{ container_name }} --restart unless-stopped {{ image_name }}
+      register: run_result
+      changed_when: run_result.rc == 0
