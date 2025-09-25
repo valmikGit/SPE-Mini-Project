@@ -1,9 +1,12 @@
+// Ensure webhook triggers work even for declarative pipelines
+properties([
+    pipelineTriggers([
+        [$class: 'GitHubPushTrigger']
+    ])
+])
+
 pipeline {
     agent any
-
-    triggers {
-        githubPush() // ensures webhook triggers this Pipeline
-    }
 
     environment {
         DOCKERHUB_CREDENTIALS = 'dockerhub-creds' // Jenkins credential ID
@@ -14,6 +17,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Use SCM defined in the job (Pipeline script from SCM)
                 checkout scm
             }
         }
@@ -34,7 +38,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     script {
-                        def name = "${env.DOCKER_USER}/${env.DOCKER_IMAGE}:${env.IMAGE_TAG}"
+                        def imageName = "${env.DOCKER_USER}/${env.DOCKER_IMAGE}:${env.IMAGE_TAG}"
                         sh "make docker-build DOCKERHUB_USER=${env.DOCKER_USER} IMAGE_TAG=${env.IMAGE_TAG}"
                     }
                 }
