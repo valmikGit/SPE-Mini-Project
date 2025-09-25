@@ -1,9 +1,12 @@
 pipeline {
     agent any
 
+    triggers {
+        githubPush() // ensures webhook triggers this Pipeline
+    }
+
     environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub-creds' // set this ID in Jenkins credentials
-        DOCKER_USER = credentials('dockerhub-username') // optional, better to set via credentials
+        DOCKERHUB_CREDENTIALS = 'dockerhub-creds' // Jenkins credential ID
         IMAGE_TAG = "latest"
         DOCKER_IMAGE = "scientific-calculator"
     }
@@ -29,9 +32,11 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                script {
-                    def name = "${env.DOCKER_USER}/${env.DOCKER_IMAGE}:${env.IMAGE_TAG}"
-                    sh "make docker-build DOCKERHUB_USER=${env.DOCKER_USER} IMAGE_TAG=${env.IMAGE_TAG}"
+                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    script {
+                        def name = "${env.DOCKER_USER}/${env.DOCKER_IMAGE}:${env.IMAGE_TAG}"
+                        sh "make docker-build DOCKERHUB_USER=${env.DOCKER_USER} IMAGE_TAG=${env.IMAGE_TAG}"
+                    }
                 }
             }
         }
@@ -47,8 +52,9 @@ pipeline {
 
         stage('Deploy via Ansible') {
             steps {
-                // Optionally run ansible to deploy the container on a managed host
-                sh 'ansible-playbook -i inventory.ini playbook-deploy.yml --extra-vars "docker_user=${DOCKER_USER} image_tag=${IMAGE_TAG}"'
+                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'ansible-playbook -i inventory.ini playbook-deploy.yml --extra-vars "docker_user=${DOCKER_USER} image_tag=${IMAGE_TAG}"'
+                }
             }
         }
     }
