@@ -1,7 +1,15 @@
 - hosts: local
   tasks:
     - name: Pull Docker image
-      command: docker pull valmikdocker7/scientific-calculator:latest
+      docker_image:
+        name: valmikdocker7/spe_mini_calculator
+        tag: latest
+        source: pull
 
     - name: Run calculator container
-      command: docker run --rm valmikdocker7/scientific-calculator:latest
+      docker_container:
+        name: calculator
+        image: valmikdocker7/spe_mini_calculator:latest
+        state: started
+        detach: true
+        restart_policy: no
