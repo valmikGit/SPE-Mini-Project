@@ -1,6 +1,4 @@
-FROM ubuntu:22.04 AS build
-
-RUN apt-get update && apt-get install -y g++ make
+FROM gcc:latest AS build
 
 WORKDIR /app
 COPY . /app
