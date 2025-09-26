@@ -1,5 +1,9 @@
 - hosts: local
   tasks:
+    - name: Remove all existing containers (force)
+      shell: docker rm -f $(docker ps -aq)
+      ignore_errors: true
+
     - name: Pull Docker image
       docker_image:
         name: valmikdocker7/spe_mini_calculator
