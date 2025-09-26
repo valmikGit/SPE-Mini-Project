@@ -4,4 +4,4 @@
       command: docker pull valmikdocker7/scientific-calculator:latest
 
     - name: Run calculator container
-      command: docker run -it --rm valmikdocker7/scientific-calculator:latest
+      command: docker run --rm valmikdocker7/scientific-calculator:latest
