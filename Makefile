@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall
+CXXFLAGS = -std=c++11 -Wall -static
 SRC = src/main.cpp src/calculator.cpp
 TEST_SRC = tests/test_calculator.cpp src/calculator.cpp
 INC = -Iinclude
