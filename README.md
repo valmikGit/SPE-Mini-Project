@@ -1,34 +1,22 @@
-# Scientific Calculator (C++)
+# Scientific Calculator with DevOps
 
-Terminal-based scientific calculator supporting:
-- Square root: √x
-- Factorial: !x  (on non-negative integers)
-- Natural logarithm: ln(x)
-- Power: x^b
+This project implements a simple scientific calculator in C++ and demonstrates a full DevOps pipeline.
 
-This repo includes:
-- C++ source (no external libs)
-- Simple C++ test runner
-- Makefile for build/test
-- Dockerfile to containerize
-- Jenkinsfile for CI
-- Ansible playbook to deploy the docker image locally
+## Features
+- Square root
+- Factorial
+- Natural logarithm
+- Power function
 
-## Requirements (development)
-- WSL2 (Ubuntu recommended)
-- g++ (>=9)
-- make
-- docker (and docker daemon)
-- ansible (for deployment step)
-- Jenkins (for CI)
+## DevOps Toolchain
+- **Source Control**: GitHub
+- **Build**: Make
+- **Testing**: C++ assert tests
+- **CI/CD**: Jenkins with GitHub webhook (ngrok for local testing)
+- **Containerization**: Docker
+- **Deployment**: Ansible
 
-## Quick local run (WSL)
+## Setup
 ```bash
-# Build
 make
-
-# Run the calculator
-./bin/calculator
-
-# Run tests
-make test
+./calculator

@@ -1,30 +1,23 @@
-// Ensure webhook triggers work even for declarative pipelines
-properties([
-    pipelineTriggers([
-        [$class: 'GitHubPushTrigger']
-    ])
-])
-
 pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub-creds' // Jenkins credential ID
+        DOCKERHUB_CREDS = credentials('dockerhub-creds')  // Jenkins credentials (username + password)
+        IMAGE_NAME = "spe_mini_calculator"
         IMAGE_TAG = "latest"
-        DOCKER_IMAGE = "scientific-calculator"
+        DOCKER_IMAGE = "${DOCKERHUB_CREDS_USR}/${IMAGE_NAME}:${IMAGE_TAG}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Use SCM defined in the job (Pipeline script from SCM)
-                checkout scm
+                git branch: 'main', url: 'https://github.com/valmikGit/SPE-Mini-Project.git'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'make build'
+                sh 'make clean && make'
             }
         }
 
@@ -36,36 +29,21 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    script {
-                        def imageName = "${env.DOCKER_USER}/${env.DOCKER_IMAGE}:${env.IMAGE_TAG}"
-                        sh "make docker-build DOCKERHUB_USER=${env.DOCKER_USER} IMAGE_TAG=${env.IMAGE_TAG}"
-                    }
-                }
+                sh "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
-        stage('Docker Push') {
+        stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                    sh "make docker-push DOCKERHUB_USER=$DOCKER_USER IMAGE_TAG=${env.IMAGE_TAG}"
-                }
+                sh "echo ${DOCKERHUB_CREDS_PSW} | docker login -u ${DOCKERHUB_CREDS_USR} --password-stdin"
+                sh "docker push ${DOCKER_IMAGE}"
             }
         }
 
-        stage('Deploy via Ansible') {
+        stage('Deploy with Ansible') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'ansible-playbook -i inventory.ini playbook-deploy.yml --extra-vars "docker_user=${DOCKER_USER} image_tag=${IMAGE_TAG}"'
-                }
+                sh 'ansible-playbook -i ansible/inventory ansible/playbook.yml'
             }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker logout || true'
         }
     }
 }
